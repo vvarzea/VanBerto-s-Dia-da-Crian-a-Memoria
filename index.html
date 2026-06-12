@@ -25,7 +25,6 @@ html,body{height:100%;font-family:'Nunito','Baloo 2',sans-serif;background:#1a0a
 .vb-eyelid{transform-origin:40px 23px;animation:eyeBlink 5s ease-in-out infinite;}
 @keyframes confettiFall{0%{transform:translateY(-10vh) rotate(0);opacity:1}100%{transform:translateY(120vh) rotate(540deg);opacity:.9}}
 @keyframes flipIn{0%{transform:rotateY(90deg) scale(.8);opacity:0}100%{transform:rotateY(0) scale(1);opacity:1}}
-@keyframes matched{0%,100%{transform:scale(1)}30%{transform:scale(1.12)}60%{transform:scale(.96)}}
 @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
 @keyframes labelPop{0%{transform:translateY(10px) scale(.9);opacity:0}100%{transform:translateY(0) scale(1);opacity:1}}
 
@@ -115,38 +114,35 @@ html,body{height:100%;font-family:'Nunito','Baloo 2',sans-serif;background:#1a0a
   border-radius:12px;
   aspect-ratio:2/3;
   width:100%;
-  perspective:600px;
   transition:transform .12s;
 }
-.mem-card:hover .card-inner{filter:brightness(1.08);}
-.mem-card.flipped .card-inner,
-.mem-card.matched .card-inner{transform:rotateY(180deg);}
+.mem-card:hover{filter:brightness(1.08);}
 .mem-card.matched{pointer-events:none;}
-.mem-card.matched .card-inner{animation:matched .4s ease-in-out;}
 
 .card-inner{
   width:100%;height:100%;
   position:relative;
-  transform-style:preserve-3d;
-  transition:transform .35s cubic-bezier(.4,0,.2,1);
   border-radius:12px;
 }
 
+/* ambas as faces ocupam o mesmo espaço */
 .card-face{
   position:absolute;inset:0;
   border-radius:12px;
-  backface-visibility:hidden;
-  -webkit-backface-visibility:hidden;
   overflow:hidden;
   display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  transition:opacity .18s ease, transform .35s cubic-bezier(.4,0,.2,1);
 }
 
-/* BACK face */
+/* BACK face — visível por defeito */
 .card-back{
   background:linear-gradient(135deg,#2a0a4e,#1a0835);
   border:2.5px solid rgba(255,107,53,.5);
   box-shadow:0 0 0 1px rgba(255,215,0,.15),inset 0 1px 0 rgba(255,200,100,.08);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  opacity:1;
+  transform:scale(1);
+  z-index:2;
 }
 .card-back-pattern{
   font-size:clamp(22px,4vw,36px);
@@ -161,17 +157,38 @@ html,body{height:100%;font-family:'Nunito','Baloo 2',sans-serif;background:#1a0a
   letter-spacing:.5px;
 }
 
-/* FRONT face */
+/* FRONT face — escondida por defeito */
 .card-front{
-  transform:rotateY(180deg);
   border:2.5px solid rgba(255,215,0,.4);
   box-shadow:0 0 16px rgba(255,107,53,.25),inset 0 1px 0 rgba(255,220,100,.12);
   background:#0f0525;
+  opacity:0;
+  transform:scale(.85);
+  z-index:1;
 }
+
+/* FLIPPED: frente visível, trás escondida */
+.mem-card.flipped .card-back,
+.mem-card.matched .card-back{
+  opacity:0;
+  transform:scale(.85);
+  z-index:1;
+}
+.mem-card.flipped .card-front,
+.mem-card.matched .card-front{
+  opacity:1;
+  transform:scale(1);
+  z-index:2;
+}
+
 .mem-card.matched .card-front{
   border-color:#4ecb71;
   box-shadow:0 0 20px rgba(78,203,113,.5),inset 0 1px 0 rgba(78,203,113,.12);
 }
+
+@keyframes matchedPop{0%,100%{transform:scale(1)}30%{transform:scale(1.08)}60%{transform:scale(.97)}}
+.mem-card.matched .card-front{animation:matchedPop .4s ease-in-out;}
+
 .card-img-wrap{
   position:absolute;inset:0;
   display:flex;align-items:center;justify-content:center;
@@ -180,8 +197,8 @@ html,body{height:100%;font-family:'Nunito','Baloo 2',sans-serif;background:#1a0a
 }
 .card-img-wrap img{
   width:100%;height:100%;
-  object-fit:cover;
-  object-position:center top;
+  object-fit:contain;
+  object-position:center center;
   display:block;
 }
 .card-label{
@@ -209,7 +226,7 @@ html,body{height:100%;font-family:'Nunito','Baloo 2',sans-serif;background:#1a0a
 }
 .mem-card.matched .matched-glow{display:block;}
 
-.mem-card.shake .card-inner{animation:shake .35s ease-in-out;}
+.mem-card.shake{animation:shake .35s ease-in-out;}
 
 /* ── WIN OVERLAY ── */
 #winOverlay{position:fixed;inset:0;z-index:700;display:none;align-items:center;justify-content:center;background:rgba(8,3,20,.88);padding:1rem;overflow-y:auto;}
@@ -400,7 +417,7 @@ const ALL_CARDS = [
    ══════════════════════════════════════════ */
 const FACTS = {
   cookies: [
-    { icon:'🍪', text:'Os cookies são pequenos ficheiros que os sites guardam no teu browser para se lembrarem das tuas preferências. Há cookies "bons" (de sessão) e cookies de rastreio que seguem os teus hábitos na internet.', topic:'🔐 Tema: Cookies e privacidade' },
+    { icon:'🍪', text:'Os cookies são pequenos ficheiros que os sites guardam no teu navegador para se lembrarem das tuas preferências. Há cookies "bons" (de sessão) e cookies de rastreio que seguem os teus hábitos na internet.', topic:'🔐 Tema: Cookies e privacidade' },
     { icon:'🍪', text:'Quando um site te pede para "aceitar cookies", podes escolher apenas os essenciais! Os cookies de publicidade não são obrigatórios e podes recusá-los.', topic:'🔐 Tema: Cookies e privacidade' },
   ],
   dar: [
@@ -408,7 +425,7 @@ const FACTS = {
     { icon:'🧅', text:'A internet que usas todos os dias é apenas uma pequena parte de toda a internet. A "Surface Web" (web visível) é como a ponta de um icebergue!', topic:'🌐 Tema: Dark Web' },
   ],
   deepfake: [
-    { icon:'🎭', text:'Os deepfakes são vídeos ou imagens criados por inteligência artificial que mostram pessoas a dizer ou fazer coisas que nunca aconteceram. Sempre verifica a fonte antes de acreditar num vídeo!', topic:'🤖 Tema: Deepfake e IA' },
+    { icon:'🎭', text:'Os deepfakes são vídeos ou imagens criados por inteligência artificial que mostram pessoas a dizer ou fazer coisas que nunca aconteceram. Verifica sempre a fonte antes de acreditar num vídeo!', topic:'🤖 Tema: Deepfake e IA' },
     { icon:'🎭', text:'Para identificar um deepfake, observa bem os olhos (piscam de forma estranha), os bordos do rosto e as orelhas. A tecnologia melhora, mas ainda deixa pistas!', topic:'🤖 Tema: Deepfake e IA' },
   ],
   fakenews: [
@@ -421,23 +438,23 @@ const FACTS = {
   ],
   malware: [
     { icon:'🦠', text:'Malware é uma palavra criada a partir de "malicious software" (software malicioso). Inclui vírus, trojans, spyware e muitos outros tipos de programas que tentam danificar ou roubar dados do teu computador.', topic:'🦠 Tema: Malware' },
-    { icon:'🦠', text:'Nunca abras ficheiros de pessoas que não conheces, mesmo que pareçam interessantes. Muitos malwares escondem-se em anexos de email ou em downloads gratuitos suspeitos!', topic:'🦠 Tema: Malware' },
+    { icon:'🦠', text:'Nunca abras ficheiros de pessoas que não conheces, mesmo que pareçam interessantes. Muitos malwares escondem-se em anexos de correio eletrónico ou em transferências gratuitas suspeitas!', topic:'🦠 Tema: Malware' },
   ],
   ransomware: [
-    { icon:'🔒', text:'O ransomware "sequestra" os ficheiros do teu computador, cifrando-os, e depois pede dinheiro (resgate) para os devolver. Fazer backups regulares é a melhor proteção!', topic:'🔒 Tema: Ransomware' },
-    { icon:'🔒', text:'Em 2017, o ataque WannaCry de ransomware afetou mais de 200 mil computadores em 150 países, incluindo hospitais. Por isso os backups e as atualizações de segurança são tão importantes!', topic:'🔒 Tema: Ransomware' },
+    { icon:'🔒', text:'O ransomware "sequestra" os ficheiros do teu computador, cifrando-os, e depois pede dinheiro (resgate) para os devolver. Fazer cópias de segurança regulares é a melhor proteção!', topic:'🔒 Tema: Ransomware' },
+    { icon:'🔒', text:'Em 2017, o ataque WannaCry de ransomware afetou mais de 200 mil computadores em 150 países, incluindo hospitais. Por isso as cópias de segurança e as atualizações de segurança são tão importantes!', topic:'🔒 Tema: Ransomware' },
   ],
   smishing: [
-    { icon:'📱', text:'Smishing = SMS + Phishing. São mensagens de texto falsas que tentam enganar-te para clicares num link perigoso ou dares informações pessoais. Nunca cliques em links de SMS suspeitos!', topic:'📱 Tema: Smishing' },
-    { icon:'📱', text:'Se recebers um SMS a dizer que ganháste um prémio ou que a tua conta bancária está em risco, desconfia sempre! Os bancos nunca pedem passwords por SMS.', topic:'📱 Tema: Smishing' },
+    { icon:'📱', text:'Smishing = SMS + Phishing. São mensagens de texto falsas que tentam enganar-te para clicares numa ligação perigosa ou dares informações pessoais. Nunca cliques em ligações de SMS suspeitos!', topic:'📱 Tema: Smishing' },
+    { icon:'📱', text:'Se receberes um SMS a dizer que ganhaste um prémio ou que a tua conta bancária está em risco, desconfia sempre! Os bancos nunca pedem palavras-passe por SMS.', topic:'📱 Tema: Smishing' },
   ],
   spyware: [
-    { icon:'👁️', text:'O spyware é um tipo de malware que se instala secretamente no teu dispositivo e espia tudo o que fazes — passwords, mensagens, até pode ligar a câmara sem tu saberes!', topic:'👁️ Tema: Spyware' },
-    { icon:'👁️', text:'Para te protegeres do spyware: instala um bom antivírus, não instales apps de fontes desconhecidas e mantém sempre o teu sistema operativo atualizado!', topic:'👁️ Tema: Spyware' },
+    { icon:'👁️', text:'O spyware é um tipo de malware que se instala secretamente no teu dispositivo e espia tudo o que fazes — palavras-passe, mensagens, até pode ligar a câmara sem tu saberes!', topic:'👁️ Tema: Spyware' },
+    { icon:'👁️', text:'Para te protegeres do spyware: instala um bom antivírus, não instales aplicações de fontes desconhecidas e mantém sempre o teu sistema operativo atualizado!', topic:'👁️ Tema: Spyware' },
   ],
   vishing: [
-    { icon:'📞', text:'Vishing = Voice + Phishing. São chamadas telefónicas falsas em que o atacante finge ser do banco, da polícia ou de uma empresa para roubar os teus dados. Nunca dês passwords por telefone!', topic:'📞 Tema: Vishing' },
-    { icon:'📞', text:'Os vigaristas de vishing usam técnicas de pressão: dizem que é urgente, que a tua conta vai ser bloqueada, que vais perder dinheiro. Mantém a calma, desliga e liga de volta para o número oficial!', topic:'📞 Tema: Vishing' },
+    { icon:'📞', text:'Vishing = Voice + Phishing. São chamadas telefónicas falsas em que o atacante finge ser do banco, da polícia ou de uma empresa para roubar os teus dados. Nunca dês palavras-passe por telefone!', topic:'📞 Tema: Vishing' },
+    { icon:'📞', text:'Os burlões de vishing usam técnicas de pressão: dizem que é urgente, que a tua conta vai ser bloqueada, que vais perder dinheiro. Mantém a calma, desliga e liga de volta para o número oficial!', topic:'📞 Tema: Vishing' },
   ],
 };
 
@@ -495,6 +512,36 @@ function pickFact(cardId){
 }
 
 /* ══════════════════════════════════════════
+   PRÉ-CARREGAMENTO DE IMAGENS
+   Corrige ficheiros com extensão errada (ex: fake_news.png que é JPEG)
+   ══════════════════════════════════════════ */
+const imgCache = {};
+
+async function preloadImage(src){
+  if(imgCache[src]) return imgCache[src];
+  try {
+    const res = await fetch(src);
+    const blob = await res.blob();
+    // Se o blob for JPEG mas a extensão for .png, força o tipo correto
+    const type = blob.type === 'image/jpeg' || blob.size > 0 ? blob.type : 'image/png';
+    const corrected = new Blob([blob], { type: type || 'image/jpeg' });
+    const url = URL.createObjectURL(corrected);
+    imgCache[src] = url;
+    return url;
+  } catch(e) {
+    imgCache[src] = src; // fallback para o src original
+    return src;
+  }
+}
+
+async function preloadAllImages(){
+  await Promise.all(ALL_CARDS.map(c => preloadImage(c.img)));
+}
+
+// Pré-carrega todas as imagens ao iniciar
+preloadAllImages();
+
+/* ══════════════════════════════════════════
    GRID BUILDER
    ══════════════════════════════════════════ */
 function buildGame(){
@@ -515,6 +562,7 @@ function buildGame(){
     const card = document.createElement('div');
     card.className='mem-card';
     card.dataset.idx=i;
+    const imgSrc = imgCache[c.img] || c.img;
     card.innerHTML=`
       <div class="card-inner">
         <div class="card-face card-back">
@@ -523,7 +571,7 @@ function buildGame(){
         </div>
         <div class="card-face card-front">
           <div class="card-img-wrap">
-            <img src="${c.img}" alt="${c.label}" loading="lazy" draggable="false">
+            <img src="${imgSrc}" alt="${c.label}" draggable="false">
           </div>
           <div class="card-label">${c.label}</div>
           <div class="matched-glow"></div>
@@ -614,7 +662,7 @@ function onCardClick(idx){
       },400);
 
     } else {
-      // ❌ NÃO É PAR — espera 1200ms para o jogador ver as imagens, depois shake e vira
+      // ❌ NÃO É PAR — espera 2500ms para o jogador ver as imagens, depois shake e vira
       setTimeout(()=>{
         setMsg('Não é par. Tenta outra vez! 💪');
         showBub('Quase! Continua a tentar! 💪');
@@ -624,7 +672,7 @@ function onCardClick(idx){
           setTimeout(()=>{el.classList.remove('shake');el.classList.remove('flipped');},400);
         });
         setTimeout(()=>{flipped=[];lockBoard=false;},420);
-      },1200);
+      },2500);
     }
   }
 }
@@ -715,7 +763,7 @@ function winGame(){
 
 function gameOver(){
   setMsg('⏰ Tempo esgotado! Tenta de novo!');
-  showBub('Ops! O tempo acabou! 😅');
+  showBub('Ups! O tempo acabou! 😅');
   lockBoard=true;
 }
 
@@ -788,7 +836,7 @@ const MSGS=[
   'Encontra os pares! 🔍','Vamos lá, és incrível! 🌟','Não desistas! 💪',
   'Usa a memória! 🧠','Cibersegurança é importante! 🔐','Já estás quase! 🚀',
   'Que jogador fantástico! 🏆','Consegues encontrar mais! 🎯','Força! 💫',
-  'Protege os teus dados! 🛡️','Nunca partilhes passwords! 🔑',
+  'Protege os teus dados! 🛡️','Nunca partilhes as tuas palavras-passe! 🔑',
 ];
 let bubT=null;
 function showBub(msg){
