@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#1a0a2e">
+<title>VanBerto's — Jogo da Memória · Cibersegurança</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Nunito','Baloo 2',sans-serif;background:#1a0a2e;overflow-x:hidden;user-select:none;-webkit-user-select:none;}
+
+@keyframes vbFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes festFlicker{
+  0%,100%{background:radial-gradient(ellipse 70% 55% at 50% 45%,rgba(255,107,53,.16) 0%,rgba(26,10,46,0) 55%,rgba(10,4,20,.94) 100%),rgba(10,4,20,.9);}
+  33%{background:radial-gradient(ellipse 68% 53% at 51% 43%,rgba(255,200,50,.18) 0%,rgba(26,10,46,0) 55%,rgba(10,4,20,.92) 100%),rgba(10,4,20,.9);}
+  66%{background:radial-gradient(ellipse 72% 58% at 49% 47%,rgba(160,80,255,.14) 0%,rgba(26,10,46,0) 55%,rgba(10,4,20,.92) 100%),rgba(10,4,20,.9);}
+}
+@keyframes cardPop{from{transform:scale(.88) rotate(-1.5deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
+@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-10px)}}
+@keyframes robotPop{0%,100%{transform:translateY(0) rotate(0)}30%{transform:translateY(-18px) rotate(-6deg)}70%{transform:translateY(-8px) rotate(5deg)}}
+@keyframes waveArm{0%,100%{transform:rotate(0)}25%,75%{transform:rotate(-20deg)}}
+@keyframes eyeBlink{0%,88%,100%{transform:scaleY(0)}93%{transform:scaleY(1)}}
+@keyframes confettiFall{0%{transform:translateY(-10vh) rotate(0);opacity:1}100%{transform:translateY(120vh) rotate(540deg);opacity:.9}}
+@keyframes flipIn{0%{transform:rotateY(90deg) scale(.8);opacity:0}100%{transform:rotateY(0) scale(1);opacity:1}}
+@keyframes matched{0%,100%{transform:scale(1)}30%{transform:scale(1.12)}60%{transform:scale(.96)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+@keyframes labelPop{0%{transform:translateY(10px) scale(.9);opacity:0}100%{transform:translateY(0) scale(1);opacity:1}}
+
+/* ── SCREENS ── */
+.screen{display:none;min-height:100vh;min-height:100dvh;padding:1.5rem 1rem 4rem;align-items:center;justify-content:center;flex-direction:column;}
+.screen.active{display:flex;}
+.screen{background:radial-gradient(ellipse 70% 55% at 50% 45%,rgba(255,107,53,.16) 0%,rgba(26,10,46,0) 55%,rgba(10,4,20,.94) 100%),rgba(10,4,20,.9);animation:festFlicker 6s ease-in-out infinite;}
+#gameScreen{animation:none;background:#0a0414;padding:.6rem .5rem 4rem;align-items:stretch;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+
+/* ── MODAL CARD ── */
+.modal-card{
+  width:min(540px,96vw);
+  background:linear-gradient(145deg,#2a0a4e 0%,#1a0835 60%,#0f0525 100%);
+  border-radius:16px;
+  box-shadow:0 0 0 3px #ff6b35,0 0 0 5px #ffd700,8px 8px 0 #0a0520,0 0 50px rgba(255,107,53,.22),inset 0 1px 0 rgba(255,200,100,.1);
+  padding:clamp(16px,3vw,26px) clamp(14px,3vw,24px) clamp(14px,2.5vw,20px);
+  position:relative;animation:cardPop .25s cubic-bezier(.34,1.56,.64,1) both;
+}
+.modal-card::before{content:'🛡️';position:absolute;top:8px;left:10px;font-size:18px;opacity:.65;pointer-events:none}
+.modal-card::after{content:'🤖';position:absolute;bottom:8px;right:10px;font-size:18px;opacity:.65;pointer-events:none}
+
+.modal-robot-row{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:16px;}
+.modal-robot{height:clamp(72px,14vw,96px);width:auto;flex-shrink:0;filter:drop-shadow(0 0 14px rgba(56,189,248,.8));animation:vbFloat 3s ease-in-out infinite;}
+.modal-bubble-box{
+  background:linear-gradient(135deg,#dcebff,#fff);
+  border:3px solid #0f172a;outline:2px solid #1e293b;outline-offset:-4px;
+  border-radius:20px;padding:10px 14px 10px 18px;
+  box-shadow:4px 4px 0 #0f172a;
+  font-family:"Comic Sans MS","Trebuchet MS",sans-serif;
+  font-size:clamp(.78rem,2.3vw,.95rem);font-weight:bold;color:#0f172a;
+  max-width:220px;line-height:1.45;text-align:center;position:relative;margin-left:10px;
+}
+.modal-bubble-box::after{content:"";position:absolute;left:-16px;top:50%;transform:translateY(-50%);border-top:10px solid transparent;border-bottom:10px solid transparent;border-right:16px solid #0f172a;}
+.modal-bubble-box::before{content:"";position:absolute;left:-11px;top:50%;transform:translateY(-50%);border-top:8px solid transparent;border-bottom:8px solid transparent;border-right:12px solid #dcebff;z-index:1;}
+
+.modal-title{font-family:'Fredoka One',cursive;font-size:clamp(1.2rem,4vw,1.6rem);color:#ffd700;text-align:center;text-shadow:0 2px 10px rgba(255,107,53,.45);margin-bottom:clamp(6px,1.5vw,12px);border-bottom:2px solid rgba(255,107,53,.4);padding-bottom:8px;}
+.modal-sub{color:#ffb8a0;font-size:clamp(.78rem,2vw,.9rem);text-align:center;margin-bottom:clamp(8px,2vw,14px);font-weight:700;line-height:1.4;}
+
+.name-row{display:flex;align-items:center;gap:10px;margin:0 0 10px;flex-wrap:wrap;justify-content:center}
+.name-row label{font-family:'Baloo 2',sans-serif;font-weight:900;font-size:13px;color:#ffd700;white-space:nowrap}
+.name-row input{flex:1;min-width:150px;border:2px solid #ff6b35;border-radius:8px;padding:7px 12px;font-size:14px;font-family:'Nunito',sans-serif;font-weight:800;background:#1a0835;color:#ffd700;outline:none;box-shadow:2px 2px 0 #ff6b35;transition:box-shadow .15s;}
+.name-row input:focus{box-shadow:2px 2px 0 #ffd700,0 0 0 3px rgba(255,107,53,.3)}
+.name-row input::placeholder{color:#ff9060;opacity:.7}
+
+.level-bar{display:flex;gap:8px;justify-content:center;margin:0 0 5px;flex-wrap:wrap}
+.lvl-btn{font-family:'Baloo 2',sans-serif;font-size:.82rem;font-weight:900;padding:.34rem .85rem;border-radius:20px;border:2px solid transparent;cursor:pointer;transition:all .18s;background:rgba(255,107,53,.06);}
+.lvl-btn.easy{border-color:#4ecb71;color:#4ecb71}
+.lvl-btn.easy.active{background:#4ecb71;color:#0f0525;box-shadow:0 0 12px rgba(78,203,113,.45)}
+.lvl-btn.medium{border-color:#ff9f43;color:#ff9f43}
+.lvl-btn.medium.active{background:#ff9f43;color:#0f0525;box-shadow:0 0 12px rgba(255,159,67,.45)}
+.lvl-btn.hard{border-color:#ff6b35;color:#ff6b35}
+.lvl-btn.hard.active{background:#ff6b35;color:#fff8e0;box-shadow:0 0 12px rgba(255,107,53,.5)}
+.lvl-desc{font-size:11px;color:#ffb890;text-align:center;margin-bottom:10px;font-style:italic;min-height:14px}
+
+.btn{font-family:'Baloo 2',sans-serif;border:2.5px solid #ff6b35;background:linear-gradient(180deg,#3a0868,#25044a);color:#ffd700;border-radius:10px;padding:clamp(7px,1.5vw,10px) clamp(12px,2.5vw,18px);font-weight:900;font-size:clamp(.78rem,1.8vw,.88rem);cursor:pointer;box-shadow:4px 4px 0 #0a0520,inset 0 1px 0 rgba(255,180,80,.1);transition:transform .08s,box-shadow .08s,background .12s;letter-spacing:.2px;}
+.btn:hover{background:linear-gradient(180deg,#4e0e80,#32065e);transform:translate(-1px,-1px);box-shadow:5px 5px 0 #0a0520}
+.btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #0a0520}
+.btn.primary{background:linear-gradient(180deg,#ff6b35,#e04010);color:#fff8e0;border-color:#ffd700;box-shadow:4px 4px 0 #0a0520,inset 0 1px 0 rgba(255,220,100,.2);text-shadow:0 1px 3px rgba(0,0,0,.35);}
+.btn.primary:hover{background:linear-gradient(180deg,#ff8050,#e85020)}
+.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+.tiny{margin-top:10px;font-size:11px;color:#ffb890;opacity:.8;font-style:italic;text-align:center}
+
+/* ── GAME SCREEN HEADER ── */
+.game-header{width:100%;max-width:900px;margin:0 auto .3rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.3rem;padding:0 .1rem;}
+.header-actions{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.btn-sm{padding:4px 10px!important;font-size:.72rem!important;}
+.progress-wrap{width:100%;max-width:900px;margin:0 auto .3rem;background:rgba(255,107,53,.12);border:1px solid rgba(255,215,0,.18);border-radius:10px;overflow:hidden;height:7px;}
+.progress-bar{height:100%;background:linear-gradient(90deg,#ff6b35,#ffd700);border-radius:10px;transition:width .4s}
+#msg{width:100%;max-width:900px;margin:.1rem auto .1rem;text-align:center;font-family:'Baloo 2',sans-serif;font-size:.85rem;font-weight:900;color:#ff6b35;min-height:1.2rem;text-shadow:0 1px 6px rgba(255,107,53,.35);}
+#score-bar{width:100%;max-width:900px;margin:0 auto .15rem;text-align:center;font-size:.75rem;color:#ffb890;font-style:italic;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+.score-chip{background:rgba(255,107,53,.1);border:1px solid rgba(255,215,0,.22);border-radius:6px;padding:2px 10px;font-weight:800;color:#ffd700;}
+
+/* ── MEMORY GRID ── */
+#memory-grid{
+  width:100%;max-width:900px;
+  margin:0 auto;
+  display:grid;
+  gap:clamp(6px,1.5vw,12px);
+  justify-items:center;
+  align-items:center;
+}
+
+/* ── MEMORY CARD ── */
+.mem-card{
+  position:relative;
+  cursor:pointer;
+  border-radius:12px;
+  aspect-ratio:2/3;
+  width:100%;
+  perspective:600px;
+  transition:transform .12s;
+}
+.mem-card:hover .card-inner{filter:brightness(1.08);}
+.mem-card.flipped .card-inner,
+.mem-card.matched .card-inner{transform:rotateY(180deg);}
+.mem-card.matched{pointer-events:none;}
+.mem-card.matched .card-inner{animation:matched .4s ease-in-out;}
+
+.card-inner{
+  width:100%;height:100%;
+  position:relative;
+  transform-style:preserve-3d;
+  transition:transform .35s cubic-bezier(.4,0,.2,1);
+  border-radius:12px;
+}
+
+.card-face{
+  position:absolute;inset:0;
+  border-radius:12px;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+  overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+}
+
+/* BACK face */
+.card-back{
+  background:linear-gradient(135deg,#2a0a4e,#1a0835);
+  border:2.5px solid rgba(255,107,53,.5);
+  box-shadow:0 0 0 1px rgba(255,215,0,.15),inset 0 1px 0 rgba(255,200,100,.08);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+}
+.card-back-pattern{
+  font-size:clamp(22px,4vw,36px);
+  opacity:.5;
+}
+.card-back-label{
+  font-family:'Baloo 2',sans-serif;
+  font-size:clamp(.55rem,1.2vw,.72rem);
+  font-weight:900;
+  color:#ff9060;
+  opacity:.7;
+  letter-spacing:.5px;
+}
+
+/* FRONT face */
+.card-front{
+  transform:rotateY(180deg);
+  border:2.5px solid rgba(255,215,0,.4);
+  box-shadow:0 0 16px rgba(255,107,53,.25),inset 0 1px 0 rgba(255,220,100,.12);
+  background:#0f0525;
+}
+.mem-card.matched .card-front{
+  border-color:#4ecb71;
+  box-shadow:0 0 20px rgba(78,203,113,.5),inset 0 1px 0 rgba(78,203,113,.12);
+}
+.card-img-wrap{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+  border-radius:10px;
+}
+.card-img-wrap img{
+  width:100%;height:100%;
+  object-fit:cover;
+  object-position:center top;
+  display:block;
+}
+.card-label{
+  position:relative;
+  z-index:2;
+  width:100%;
+  background:linear-gradient(0deg,rgba(0,0,0,.85) 0%,rgba(0,0,0,.4) 80%,transparent 100%);
+  padding:clamp(4px,1vw,8px) clamp(4px,.8vw,8px) clamp(4px,.8vw,6px);
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(.55rem,1.3vw,.82rem);
+  color:#ffd700;
+  text-align:center;
+  letter-spacing:.3px;
+  text-shadow:0 1px 4px rgba(0,0,0,.9);
+  line-height:1.2;
+  border-radius:0 0 10px 10px;
+}
+.mem-card.matched .card-label{color:#4ecb71;}
+
+/* matched glow overlay */
+.matched-glow{
+  position:absolute;inset:0;border-radius:10px;pointer-events:none;z-index:3;
+  background:radial-gradient(circle,rgba(78,203,113,.2) 0%,transparent 70%);
+  display:none;
+}
+.mem-card.matched .matched-glow{display:block;}
+
+.mem-card.shake .card-inner{animation:shake .35s ease-in-out;}
+
+/* ── WIN OVERLAY ── */
+#winOverlay{position:fixed;inset:0;z-index:700;display:none;align-items:center;justify-content:center;background:rgba(8,3,20,.88);padding:1rem;overflow-y:auto;}
+#winOverlay.active{display:flex;}
+.win-card{width:min(480px,94vw);background:linear-gradient(135deg,#0f0530,#1e0840);border-radius:16px;box-shadow:0 0 0 3px #ff6b35,0 0 0 5px #ffd700,8px 8px 0 #0a0520,0 0 60px rgba(255,107,53,.25);padding:clamp(16px,3vw,28px) clamp(14px,3vw,24px);text-align:center;animation:cardPop .4s cubic-bezier(.34,1.56,.64,1) both;}
+.win-trophy{font-size:clamp(44px,10vw,62px);animation:bounce .8s ease-in-out infinite alternate;display:block;margin-bottom:6px;}
+.win-title{font-family:'Fredoka One',cursive;font-size:clamp(1.4rem,4.5vw,2rem);color:#ffd700;text-shadow:0 0 24px rgba(255,215,0,.5);margin-bottom:4px;}
+.win-name{font-size:14px;color:#ffb890;font-style:italic;margin-bottom:12px;}
+.win-stats{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.win-stat{font-size:13px;color:#ffe0d0;background:rgba(255,107,53,.14);border:1px solid rgba(255,215,0,.18);border-radius:6px;padding:7px 12px;font-weight:800;}
+.win-medal{font-size:15px;font-weight:900;color:#ffd700;background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.18);border-radius:6px;padding:8px 12px;}
+
+/* ── FACT OVERLAY (Sabias que…?) ── */
+#factOverlay{position:fixed;inset:0;z-index:800;display:none;align-items:center;justify-content:center;background:rgba(8,3,20,.92);padding:1rem;}
+#factOverlay.active{display:flex;}
+.fact-card{width:min(460px,94vw);background:linear-gradient(135deg,#0a1a3e,#0f1f4a);border-radius:16px;box-shadow:0 0 0 3px #38bdf8,0 0 0 5px #0284c7,8px 8px 0 #030a1e,0 0 50px rgba(56,189,248,.25);padding:clamp(18px,4vw,28px) clamp(16px,3vw,24px);text-align:center;animation:cardPop .35s cubic-bezier(.34,1.56,.64,1) both;}
+.fact-icon{font-size:clamp(36px,8vw,52px);display:block;margin-bottom:8px;}
+.fact-title{font-family:'Fredoka One',cursive;font-size:clamp(1rem,3.5vw,1.4rem);color:#38bdf8;margin-bottom:10px;text-shadow:0 0 18px rgba(56,189,248,.5);}
+.fact-text{font-size:clamp(.82rem,2.2vw,.98rem);color:#e0f2fe;line-height:1.6;margin-bottom:16px;font-weight:700;}
+.fact-topic{font-size:clamp(.7rem,1.8vw,.82rem);color:#7dd3fc;font-style:italic;margin-bottom:14px;}
+
+/* ── ROBOT FLUTUANTE ── */
+#fixed-robot-wrap{position:fixed;bottom:clamp(.6rem,2vh,1.2rem);right:clamp(.6rem,2vw,1.2rem);z-index:650;display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:auto;}
+#fixed-vb-robot{width:clamp(52px,7vw,72px);cursor:pointer;animation:vbFloat 3s ease-in-out infinite;filter:drop-shadow(0 0 12px #7dd3fc);}
+#fixed-vb-robot:hover{filter:drop-shadow(0 0 24px #38bdf8);}
+#fixed-vb-robot.bounce{animation:robotPop .65s cubic-bezier(.34,1.56,.64,1),vbFloat 3s ease-in-out .65s infinite;}
+#fixed-bubble{--bc:#dcebff;background:linear-gradient(135deg,var(--bc),#fff);border:3px solid #0f172a;outline:2px solid #1e293b;outline-offset:-4px;border-radius:16px;padding:6px 10px 5px;box-shadow:3px 3px 0 #0f172a;font-family:"Comic Sans MS","Trebuchet MS",sans-serif;font-size:clamp(.6rem,1.5vw,.78rem);font-weight:bold;color:#0f172a;max-width:160px;min-width:80px;text-align:center;pointer-events:none;position:relative;opacity:0;transform:translateY(-6px) scale(.88);transition:opacity .38s,transform .38s cubic-bezier(.34,1.56,.64,1);margin-bottom:4px;}
+#fixed-bubble::after{content:"";position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);border-left:10px solid transparent;border-right:10px solid transparent;border-top:14px solid #0f172a;}
+#fixed-bubble::before{content:"";position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);border-left:8px solid transparent;border-right:8px solid transparent;border-top:11px solid var(--bc);z-index:1;}
+#fixed-bubble.show{opacity:1;transform:translateY(0) scale(1);}
+#fixed-robot-name{font-family:'Fredoka One',cursive;font-size:clamp(.6rem,1.3vw,.72rem);color:#ffd700;text-shadow:0 1px 6px rgba(0,0,0,.8),0 0 10px rgba(255,107,53,.4);text-align:center;line-height:1.2;}
+
+/* ── CONFETTI ── */
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:5000;overflow:hidden}
+#confetti.hidden{display:none!important}
+#confetti span{position:absolute;top:-10vh;animation:confettiFall linear forwards;will-change:transform}
+
+/* ── PROF TAG ── */
+#prof-tag{position:fixed;bottom:.6rem;left:50%;transform:translateX(-50%);z-index:600;font-family:'Nunito',sans-serif;font-size:clamp(.65rem,1.8vw,.78rem);color:#ffb890;font-weight:800;white-space:nowrap;text-shadow:0 1px 6px rgba(0,0,0,.8);pointer-events:none;}
+
+/* ── FULLSCREEN BUTTON ── */
+#btn-fullscreen{background:rgba(255,107,53,.08);border:2px solid rgba(255,215,0,.35);border-radius:8px;color:#ffd700;cursor:pointer;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:14px;padding:0;flex-shrink:0;transition:background .15s,border-color .15s,transform .1s;line-height:1;}
+#btn-fullscreen:hover{background:rgba(255,107,53,.2);border-color:#ffd700;transform:scale(1.08);}
+
+/* ── TIMER CHIP ── */
+#timer-chip{font-family:'Baloo 2',sans-serif;font-size:.8rem;font-weight:900;color:#ff9060;background:rgba(255,107,53,.1);border:1px solid rgba(255,107,53,.3);border-radius:6px;padding:2px 10px;letter-spacing:.3px;}
+#timer-chip.warning{color:#ff4444;border-color:#ff4444;background:rgba(255,68,68,.12);}
+
+/* ── RESPONSIVE ── */
+@media(max-width:600px){
+  .mem-card{border-radius:8px;}
+  .card-label{font-size:clamp(.45rem,2.5vw,.65rem);}
+}
+@media(max-width:380px){
+  .card-label{font-size:.45rem;padding:3px 3px 3px;}
+}
+</style>
+</head>
+<body lang="pt-PT">
+
+<!-- ═══ ECRÃ INICIAL ═══ -->
+<div id="startScreen" class="screen active">
+  <div class="modal-card">
+    <div class="modal-title">🧠 Jogo da Memória<br>Cibersegurança</div>
+    <div class="modal-sub">Encontra os pares de imagens iguais!<br>Quanto mais rápido, mais pontos!</div>
+    <div class="name-row">
+      <label for="playerName">O teu nome:</label>
+      <input type="text" id="playerName" maxlength="22" placeholder="Escreve o teu nome…" autocomplete="off">
+    </div>
+    <div class="level-bar">
+      <button class="lvl-btn easy active" data-level="easy">⭐ Fácil</button>
+      <button class="lvl-btn medium" data-level="medium">⭐⭐ Médio</button>
+      <button class="lvl-btn hard" data-level="hard">⭐⭐⭐ Difícil</button>
+    </div>
+    <p class="lvl-desc" id="startLvlDesc">6 pares · sem limite de tempo</p>
+    <div class="row">
+      <button id="btnStart" class="btn primary">▶ Começar a jogar!</button>
+    </div>
+    <p class="tiny">Clica nas cartas para as virar e encontrar os pares!</p>
+  </div>
+</div>
+
+<!-- ═══ ECRÃ DE JOGO ═══ -->
+<div id="gameScreen" class="screen">
+  <div class="game-header">
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+      <span id="timer-chip">⏱ —</span>
+      <span id="moves-chip" class="score-chip">0 jogadas</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-sm primary" id="btn-restart">↺ Novo Jogo</button>
+      <button class="btn btn-sm" id="btn-menu">🏠 Menu</button>
+      <button id="btn-fullscreen" title="Ecrã inteiro">⛶</button>
+    </div>
+  </div>
+  <div class="progress-wrap"><div class="progress-bar" id="pbar" style="width:0%"></div></div>
+  <div id="msg"></div>
+  <div id="score-bar">
+    <span class="score-chip">✅ Pares: <strong id="pairs-found">0</strong> / <strong id="pairs-total">0</strong></span>
+    <span class="score-chip">⭐ Pontos: <strong id="score-val">0</strong></span>
+  </div>
+  <div id="memory-grid"></div>
+</div>
+
+<!-- ═══ VITÓRIA ═══ -->
+<div id="winOverlay">
+  <div class="win-card">
+    <span class="win-trophy">🏆</span>
+    <div class="win-title">Todos os pares encontrados!</div>
+    <p class="win-name">Parabéns, <strong id="winName" style="color:#ffd700;font-style:normal">Herói</strong>!</p>
+    <div class="win-stats">
+      <div class="win-stat">⏱ Tempo: <strong id="winTime">—</strong></div>
+      <div class="win-stat">🎮 Jogadas: <strong id="winMoves">—</strong></div>
+      <div class="win-stat">⭐ Pontos: <strong id="winScore">—</strong></div>
+      <div class="win-medal" id="winMedal">🥇 Excelente!</div>
+    </div>
+    <div class="row">
+      <button id="btnWinRestart" class="btn primary">🔄 Jogar de novo</button>
+      <button id="btnWinMenu" class="btn">🏠 Menu</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SABIAS QUE…? OVERLAY ═══ -->
+<div id="factOverlay">
+  <div class="fact-card">
+    <span class="fact-icon" id="factIcon">💡</span>
+    <div class="fact-title">Sabias que…?</div>
+    <p class="fact-text" id="factText"></p>
+    <p class="fact-topic" id="factTopic"></p>
+    <div class="row" style="margin-top:0">
+      <button id="btnFactContinue" class="btn primary">▶ Continuar a jogar!</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ROBOT FLUTUANTE ═══ -->
+<div id="fixed-robot-wrap">
+  <div id="fixed-bubble" role="status" aria-live="polite"></div>
+  <svg id="fixed-vb-robot" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" role="button" tabindex="0" aria-label="VanBerto's">
+    <defs>
+      <linearGradient id="frbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e5f2ff"/><stop offset="100%" stop-color="#bfdbfe"/></linearGradient>
+      <linearGradient id="frvg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#38bdf8"/></linearGradient>
+    </defs>
+    <circle cx="40" cy="40" r="34" fill="rgba(147,197,253,0.35)"/>
+    <rect x="18" y="30" width="44" height="32" rx="14" fill="url(#frbg)"/>
+    <circle cx="40" cy="46" r="7" fill="#9ca3af"/>
+    <rect x="22" y="10" width="36" height="26" rx="13" fill="url(#frbg)"/>
+    <rect x="26" y="15" width="28" height="16" rx="8" fill="url(#frvg)"/>
+    <rect class="vb-eyelid" x="26" y="15" width="28" height="16" rx="8" fill="#e5f2ff" opacity="0.9"/>
+    <circle cx="33" cy="23" r="2.5" fill="#0f172a"/><circle cx="47" cy="23" r="2.5" fill="#0f172a"/>
+    <circle cx="34.2" cy="21.5" r="1" fill="white" opacity="0.8"/><circle cx="48.2" cy="21.5" r="1" fill="white" opacity="0.8"/>
+    <line x1="40" y1="10" x2="40" y2="4" stroke="#38bdf8" stroke-width="2"/><circle cx="40" cy="3" r="2.5" fill="#38bdf8"/>
+    <rect x="12" y="34" width="6" height="20" rx="3" fill="#e5e7eb"/>
+    <rect class="vb-arm" x="62" y="34" width="6" height="20" rx="3" fill="#e5e7eb"/>
+    <rect x="22" y="58" width="12" height="8" rx="3" fill="#1f2937"/><rect x="46" y="58" width="12" height="8" rx="3" fill="#1f2937"/>
+  </svg>
+  <div id="fixed-robot-name">👤 Herói</div>
+</div>
+
+<div id="prof-tag">© Professora Vanda Várzea</div>
+<div id="confetti" class="hidden" aria-hidden="true"></div>
+
+<script>
+'use strict';
+
+/* ══════════════════════════════════════════
+   CARD DATA
+   ── As imagens devem estar na mesma pasta ──
+   ── que este ficheiro index.html           ──
+   ══════════════════════════════════════════ */
+const ALL_CARDS = [
+  { id:'cookies',   img:'cookies.png',   label:'Cookies' },
+  { id:'dar',       img:'dar.png',       label:'Dark Web' },
+  { id:'deepfake',  img:'deepfake.png',  label:'Deepfake' },
+  { id:'fakenews',  img:'fake_news.png', label:'Fake News' },
+  { id:'firewall',  img:'firewall.png',  label:'Firewall' },
+  { id:'malware',   img:'malware.png',   label:'Malware' },
+  { id:'ransomware',img:'ransware.png',  label:'Ransomware' },
+  { id:'smishing',  img:'smishing.png',  label:'Smishing' },
+  { id:'spyware',   img:'spyware.png',   label:'Spyware' },
+  { id:'vishing',   img:'vishing.png',   label:'Vishing' },
+];
+
+/* ══════════════════════════════════════════
+   FACTOS DIDÁTICOS  — "Sabias que…?"
+   Mostrados ao encontrar um par
+   ══════════════════════════════════════════ */
+const FACTS = {
+  cookies: [
+    { icon:'🍪', text:'Os cookies são pequenos ficheiros que os sites guardam no teu browser para se lembrarem das tuas preferências. Há cookies "bons" (de sessão) e cookies de rastreio que seguem os teus hábitos na internet.', topic:'🔐 Tema: Cookies e privacidade' },
+    { icon:'🍪', text:'Quando um site te pede para "aceitar cookies", podes escolher apenas os essenciais! Os cookies de publicidade não são obrigatórios e podes recusá-los.', topic:'🔐 Tema: Cookies e privacidade' },
+  ],
+  dar: [
+    { icon:'🧅', text:'A Dark Web é uma parte da internet que só pode ser acedida com software especial, como o Tor. É usada tanto por jornalistas e ativistas como por criminosos. Nunca deves tentar aceder sem orientação de um adulto!', topic:'🌐 Tema: Dark Web' },
+    { icon:'🧅', text:'A internet que usas todos os dias é apenas uma pequena parte de toda a internet. A "Surface Web" (web visível) é como a ponta de um icebergue!', topic:'🌐 Tema: Dark Web' },
+  ],
+  deepfake: [
+    { icon:'🎭', text:'Os deepfakes são vídeos ou imagens criados por inteligência artificial que mostram pessoas a dizer ou fazer coisas que nunca aconteceram. Sempre verifica a fonte antes de acreditar num vídeo!', topic:'🤖 Tema: Deepfake e IA' },
+    { icon:'🎭', text:'Para identificar um deepfake, observa bem os olhos (piscam de forma estranha), os bordos do rosto e as orelhas. A tecnologia melhora, mas ainda deixa pistas!', topic:'🤖 Tema: Deepfake e IA' },
+  ],
+  fakenews: [
+    { icon:'📰', text:'As fake news são notícias falsas criadas para enganar as pessoas. Antes de partilhar uma notícia, verifica sempre se aparece noutros sites de confiança!', topic:'📰 Tema: Fake News' },
+    { icon:'📰', text:'Um título muito sensacionalista ou que te provoca raiva intensa pode ser sinal de fake news. Respira fundo, pesquisa, e só depois partilhas!', topic:'📰 Tema: Fake News' },
+  ],
+  firewall: [
+    { icon:'🛡️', text:'Uma firewall é como um guarda de segurança do teu computador — analisa todo o tráfego de rede e bloqueia o que parece suspeito. É uma das primeiras linhas de defesa contra ataques!', topic:'🛡️ Tema: Proteção digital' },
+    { icon:'🛡️', text:'O nome "firewall" vem das paredes corta-fogo usadas nos edifícios para impedir que o fogo se espalhe. Na informática, funciona da mesma forma: isola e bloqueia ameaças!', topic:'🛡️ Tema: Proteção digital' },
+  ],
+  malware: [
+    { icon:'🦠', text:'Malware é uma palavra criada a partir de "malicious software" (software malicioso). Inclui vírus, trojans, spyware e muitos outros tipos de programas que tentam danificar ou roubar dados do teu computador.', topic:'🦠 Tema: Malware' },
+    { icon:'🦠', text:'Nunca abras ficheiros de pessoas que não conheces, mesmo que pareçam interessantes. Muitos malwares escondem-se em anexos de email ou em downloads gratuitos suspeitos!', topic:'🦠 Tema: Malware' },
+  ],
+  ransomware: [
+    { icon:'🔒', text:'O ransomware "sequestra" os ficheiros do teu computador, cifrando-os, e depois pede dinheiro (resgate) para os devolver. Fazer backups regulares é a melhor proteção!', topic:'🔒 Tema: Ransomware' },
+    { icon:'🔒', text:'Em 2017, o ataque WannaCry de ransomware afetou mais de 200 mil computadores em 150 países, incluindo hospitais. Por isso os backups e as atualizações de segurança são tão importantes!', topic:'🔒 Tema: Ransomware' },
+  ],
+  smishing: [
+    { icon:'📱', text:'Smishing = SMS + Phishing. São mensagens de texto falsas que tentam enganar-te para clicares num link perigoso ou dares informações pessoais. Nunca cliques em links de SMS suspeitos!', topic:'📱 Tema: Smishing' },
+    { icon:'📱', text:'Se recebers um SMS a dizer que ganháste um prémio ou que a tua conta bancária está em risco, desconfia sempre! Os bancos nunca pedem passwords por SMS.', topic:'📱 Tema: Smishing' },
+  ],
+  spyware: [
+    { icon:'👁️', text:'O spyware é um tipo de malware que se instala secretamente no teu dispositivo e espia tudo o que fazes — passwords, mensagens, até pode ligar a câmara sem tu saberes!', topic:'👁️ Tema: Spyware' },
+    { icon:'👁️', text:'Para te protegeres do spyware: instala um bom antivírus, não instales apps de fontes desconhecidas e mantém sempre o teu sistema operativo atualizado!', topic:'👁️ Tema: Spyware' },
+  ],
+  vishing: [
+    { icon:'📞', text:'Vishing = Voice + Phishing. São chamadas telefónicas falsas em que o atacante finge ser do banco, da polícia ou de uma empresa para roubar os teus dados. Nunca dês passwords por telefone!', topic:'📞 Tema: Vishing' },
+    { icon:'📞', text:'Os vigaristas de vishing usam técnicas de pressão: dizem que é urgente, que a tua conta vai ser bloqueada, que vais perder dinheiro. Mantém a calma, desliga e liga de volta para o número oficial!', topic:'📞 Tema: Vishing' },
+  ],
+};
+
+/* ══════════════════════════════════════════
+   NÍVEIS
+   ══════════════════════════════════════════ */
+const LEVELS_CFG = {
+  easy:   { pairs:6,  cols:4, time:0,   label:'6 pares · sem limite de tempo' },
+  medium: { pairs:8,  cols:4, time:120, label:'8 pares · 2 minutos' },
+  hard:   { pairs:10, cols:4, time:150, label:'10 pares · 2:30 minutos' },
+};
+
+/* ══════════════════════════════════════════
+   ESTADO
+   ══════════════════════════════════════════ */
+let playerName = 'Herói';
+let lvl = 'easy';
+let cards = [];
+let flipped = [];
+let matched = new Set();
+let moves = 0;
+let score = 0;
+let lockBoard = false;
+let timerInterval = null;
+let elapsed = 0;
+let gameActive = false;
+
+// Anti-repetição para factos
+const factUsed = {};
+
+/* ══════════════════════════════════════════
+   HELPERS
+   ══════════════════════════════════════════ */
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+function fmtTime(s){
+  const m=Math.floor(s/60),sec=s%60;
+  return m+':'+(sec<10?'0':'')+sec;
+}
+
+// Escolhe um facto aleatório para um tema, evitando repetição imediata
+function pickFact(cardId){
+  const pool = FACTS[cardId];
+  if(!pool) return null;
+  if(!factUsed[cardId]) factUsed[cardId]=[];
+  // reset se todos usados
+  if(factUsed[cardId].length>=pool.length) factUsed[cardId]=[];
+  const available = pool.filter((_,i)=>!factUsed[cardId].includes(i));
+  const idx = pool.indexOf(available[Math.floor(Math.random()*available.length)]);
+  factUsed[cardId].push(idx);
+  return pool[idx];
+}
+
+/* ══════════════════════════════════════════
+   GRID BUILDER
+   ══════════════════════════════════════════ */
+function buildGame(){
+  clearInterval(timerInterval);
+  elapsed=0; moves=0; score=0; flipped=[]; matched=new Set(); lockBoard=false; gameActive=false;
+
+  const cfg = LEVELS_CFG[lvl];
+  const pool = shuffle(ALL_CARDS).slice(0,cfg.pairs);
+  cards = shuffle([...pool,...pool].map((c,i)=>({...c,uid:i+'-'+c.id})));
+
+  const grid = document.getElementById('memory-grid');
+  grid.innerHTML='';
+  grid.style.gridTemplateColumns = `repeat(${cfg.cols},1fr)`;
+  const maxW = cfg.cols<=4?600:900;
+  grid.style.maxWidth = maxW+'px';
+
+  cards.forEach((c,i)=>{
+    const card = document.createElement('div');
+    card.className='mem-card';
+    card.dataset.idx=i;
+    card.innerHTML=`
+      <div class="card-inner">
+        <div class="card-face card-back">
+          <div class="card-back-pattern">🔐</div>
+          <div class="card-back-label">VIRAR</div>
+        </div>
+        <div class="card-face card-front">
+          <div class="card-img-wrap">
+            <img src="${c.img}" alt="${c.label}" loading="lazy" draggable="false">
+          </div>
+          <div class="card-label">${c.label}</div>
+          <div class="matched-glow"></div>
+        </div>
+      </div>`;
+    card.addEventListener('click',()=>onCardClick(i));
+    grid.appendChild(card);
+  });
+
+  updateUI();
+  setMsg('Vira as cartas e encontra os pares! 🔍');
+  document.getElementById('pairs-total').textContent=cfg.pairs;
+  document.getElementById('pairs-found').textContent=0;
+  document.getElementById('pbar').style.width='0%';
+
+  if(cfg.time>0){
+    document.getElementById('timer-chip').textContent='⏱ '+fmtTime(cfg.time);
+    document.getElementById('timer-chip').classList.remove('warning');
+  } else {
+    document.getElementById('timer-chip').textContent='⏱ 0:00';
+    document.getElementById('timer-chip').classList.remove('warning');
+  }
+}
+
+function startTimer(){
+  clearInterval(timerInterval);
+  const cfg=LEVELS_CFG[lvl];
+  const countDown=cfg.time>0;
+  if(countDown){
+    let remaining=cfg.time;
+    timerInterval=setInterval(()=>{
+      elapsed++;remaining--;
+      document.getElementById('timer-chip').textContent='⏱ '+fmtTime(remaining);
+      if(remaining<=20){document.getElementById('timer-chip').classList.add('warning');}
+      if(remaining<=0){
+        clearInterval(timerInterval);
+        gameOver();
+      }
+    },1000);
+  } else {
+    timerInterval=setInterval(()=>{
+      elapsed++;
+      document.getElementById('timer-chip').textContent='⏱ '+fmtTime(elapsed);
+    },1000);
+  }
+}
+
+/* ══════════════════════════════════════════
+   LÓGICA DE CLIQUE / VERIFICAÇÃO
+   ══════════════════════════════════════════ */
+function onCardClick(idx){
+  if(lockBoard||flipped.includes(idx)||matched.has(cards[idx].id))return;
+  if(!gameActive){gameActive=true;startTimer();}
+
+  const cardEl=document.querySelector(`.mem-card[data-idx="${idx}"]`);
+  cardEl.classList.add('flipped');
+  flipped.push(idx);
+
+  if(flipped.length===2){
+    lockBoard=true;
+    moves++;
+    updateUI();
+    const [a,b]=flipped;
+
+    if(cards[a].id===cards[b].id){
+      // ✅ PAR ENCONTRADO
+      setTimeout(()=>{
+        [a,b].forEach(i=>{
+          const el=document.querySelector(`.mem-card[data-idx="${i}"]`);
+          el.classList.add('matched');
+        });
+        matched.add(cards[a].id);
+        flipped=[];
+        const pts=Math.max(10, 50-moves);
+        score+=pts;
+        updateUI();
+        const pf=matched.size;
+        document.getElementById('pairs-found').textContent=pf;
+        document.getElementById('pbar').style.width=(pf/LEVELS_CFG[lvl].pairs*100)+'%';
+
+        if(matched.size===LEVELS_CFG[lvl].pairs){
+          // Jogo ganho — mostra vitória após breve pausa
+          setTimeout(winGame, 400);
+        } else {
+          // Mostra facto didático, jogo fica pausado
+          showFact(cards[a].id, pts);
+        }
+      },400);
+
+    } else {
+      // ❌ NÃO É PAR
+      setTimeout(()=>{
+        [a,b].forEach(i=>{
+          const el=document.querySelector(`.mem-card[data-idx="${i}"]`);
+          el.classList.add('shake');
+          setTimeout(()=>{el.classList.remove('shake');el.classList.remove('flipped');},380);
+        });
+        flipped=[];lockBoard=false;
+        setMsg('Não é par. Tenta outra vez! 💪');
+        showBub('Quase! Continua a tentar! 💪');
+      },800);
+    }
+  }
+}
+
+/* ══════════════════════════════════════════
+   FACTOS DIDÁTICOS
+   ══════════════════════════════════════════ */
+function showFact(cardId, pts){
+  // Pausa o timer enquanto mostra o facto
+  clearInterval(timerInterval);
+
+  const fact = pickFact(cardId);
+  setMsg('✅ Par encontrado! +'+pts+' pontos! 🎉');
+  showBub('Aprendeste algo novo! 💡');
+
+  if(!fact){
+    // sem facto registado: retoma sem mostrar overlay
+    lockBoard=false;
+    resumeTimer();
+    return;
+  }
+
+  document.getElementById('factIcon').textContent = fact.icon;
+  document.getElementById('factText').textContent  = fact.text;
+  document.getElementById('factTopic').textContent = fact.topic;
+  document.getElementById('factOverlay').classList.add('active');
+}
+
+document.getElementById('btnFactContinue').addEventListener('click',()=>{
+  document.getElementById('factOverlay').classList.remove('active');
+  lockBoard=false;
+  resumeTimer();
+});
+
+function resumeTimer(){
+  const cfg=LEVELS_CFG[lvl];
+  if(!gameActive || matched.size===cfg.pairs) return;
+  // Retoma o timer do ponto onde estava
+  const countDown=cfg.time>0;
+  if(countDown){
+    let remaining=cfg.time-elapsed;
+    if(remaining<=0){gameOver();return;}
+    timerInterval=setInterval(()=>{
+      elapsed++;remaining--;
+      document.getElementById('timer-chip').textContent='⏱ '+fmtTime(remaining);
+      if(remaining<=20){document.getElementById('timer-chip').classList.add('warning');}
+      if(remaining<=0){clearInterval(timerInterval);gameOver();}
+    },1000);
+  } else {
+    timerInterval=setInterval(()=>{
+      elapsed++;
+      document.getElementById('timer-chip').textContent='⏱ '+fmtTime(elapsed);
+    },1000);
+  }
+}
+
+/* ══════════════════════════════════════════
+   UI / WIN / GAME OVER
+   ══════════════════════════════════════════ */
+function updateUI(){
+  document.getElementById('moves-chip').textContent=moves+' jogada'+(moves!==1?'s':'');
+  document.getElementById('score-val').textContent=score;
+}
+
+function setMsg(t){
+  document.getElementById('msg').textContent=t;
+}
+
+function winGame(){
+  clearInterval(timerInterval);
+  spawnConfetti();
+  const cfg=LEVELS_CFG[lvl];
+  const perfect=moves===cfg.pairs;
+  const fast=cfg.time>0?elapsed<cfg.pairs*8:elapsed<cfg.pairs*10;
+  let medal='🥉 Bem feito!';
+  if(perfect)medal='🥇 Perfeito! Jogadas mínimas!';
+  else if(moves<cfg.pairs*2)medal='🥈 Muito bem!';
+  else if(fast)medal='🥈 Muito rápido!';
+
+  document.getElementById('winName').textContent=playerName;
+  document.getElementById('winTime').textContent=fmtTime(elapsed);
+  document.getElementById('winMoves').textContent=moves+' jogadas';
+  document.getElementById('winScore').textContent=score+' pontos';
+  document.getElementById('winMedal').textContent=medal;
+  document.getElementById('winOverlay').classList.add('active');
+  showBub('Parabéns! Encontraste todos os pares! 🏆');
+}
+
+function gameOver(){
+  setMsg('⏰ Tempo esgotado! Tenta de novo!');
+  showBub('Ops! O tempo acabou! 😅');
+  lockBoard=true;
+}
+
+/* ══════════════════════════════════════════
+   NAVEGAÇÃO
+   ══════════════════════════════════════════ */
+document.getElementById('btnStart').addEventListener('click',()=>{
+  playerName=document.getElementById('playerName').value.trim()||'Herói';
+  document.getElementById('startScreen').classList.remove('active');
+  document.getElementById('gameScreen').classList.add('active');
+  document.getElementById('fixed-robot-name').textContent='👤 '+playerName;
+  document.getElementById('fixed-robot-wrap').style.display='flex';
+  requestAnimationFrame(()=>requestAnimationFrame(buildGame));
+});
+document.getElementById('btn-restart').addEventListener('click',()=>{
+  stopConf();
+  document.getElementById('winOverlay').classList.remove('active');
+  document.getElementById('factOverlay').classList.remove('active');
+  buildGame();
+});
+document.getElementById('btn-menu').addEventListener('click',goMenu);
+document.getElementById('btnWinRestart').addEventListener('click',()=>{stopConf();document.getElementById('winOverlay').classList.remove('active');buildGame();});
+document.getElementById('btnWinMenu').addEventListener('click',()=>{stopConf();goMenu();});
+
+function goMenu(){
+  clearInterval(timerInterval);
+  stopConf();
+  document.getElementById('winOverlay').classList.remove('active');
+  document.getElementById('factOverlay').classList.remove('active');
+  document.getElementById('gameScreen').classList.remove('active');
+  document.getElementById('startScreen').classList.add('active');
+  showBub('Vira as cartas e encontra os pares! 🧠');
+}
+
+/* ══════════════════════════════════════════
+   SELEÇÃO DE NÍVEL
+   ══════════════════════════════════════════ */
+document.querySelectorAll('.lvl-btn').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.lvl-btn').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  lvl=b.dataset.level;
+  const descEl=document.getElementById('startLvlDesc');
+  if(descEl)descEl.textContent=LEVELS_CFG[lvl].label;
+}));
+
+/* ══════════════════════════════════════════
+   CONFETTI
+   ══════════════════════════════════════════ */
+let cInt=null;
+const CE=['🎈','🌟','🎉','🔐','🎊','⭐','🛡️','🤖'];
+function spawnConfetti(){
+  const el=document.getElementById('confetti');el.classList.remove('hidden');el.innerHTML='';
+  cInt=setInterval(()=>{
+    for(let i=0;i<5;i++){
+      const s=document.createElement('span');s.textContent=CE[Math.floor(Math.random()*CE.length)];
+      s.style.left=Math.random()*100+'vw';
+      s.style.animationDuration=(2+Math.random()*2.5)+'s';
+      s.style.animationDelay=Math.random()+'s';
+      s.style.fontSize=(14+Math.random()*14)+'px';
+      el.appendChild(s);setTimeout(()=>s.remove(),4500);
+    }
+  },280);
+}
+function stopConf(){clearInterval(cInt);const el=document.getElementById('confetti');el.classList.add('hidden');el.innerHTML='';}
+
+/* ══════════════════════════════════════════
+   ROBOT BUBBLE
+   ══════════════════════════════════════════ */
+const MSGS=[
+  'Encontra os pares! 🔍','Vamos lá, és incrível! 🌟','Não desistas! 💪',
+  'Usa a memória! 🧠','Cibersegurança é importante! 🔐','Já estás quase! 🚀',
+  'Que jogador fantástico! 🏆','Consegues encontrar mais! 🎯','Força! 💫',
+  'Protege os teus dados! 🛡️','Nunca partilhes passwords! 🔑',
+];
+let bubT=null;
+function showBub(msg){
+  const b=document.getElementById('fixed-bubble');
+  b.textContent=msg;b.classList.add('show');
+  clearTimeout(bubT);bubT=setTimeout(()=>b.classList.remove('show'),3500);
+}
+const vbRobot=document.getElementById('fixed-vb-robot');
+vbRobot.addEventListener('click',()=>{
+  vbRobot.classList.remove('bounce');void vbRobot.offsetWidth;vbRobot.classList.add('bounce');
+  showBub(MSGS[Math.floor(Math.random()*MSGS.length)]);
+});
+setInterval(()=>{
+  if(document.getElementById('gameScreen').classList.contains('active')&&gameActive&&matched.size<LEVELS_CFG[lvl].pairs){
+    showBub(MSGS[Math.floor(Math.random()*MSGS.length)]);
+  }
+},18000);
+setTimeout(()=>showBub('Olá! Vira as cartas e encontra os pares! 🎈'),900);
+
+/* ══════════════════════════════════════════
+   FULLSCREEN
+   ══════════════════════════════════════════ */
+const btnFS=document.getElementById('btn-fullscreen');
+btnFS.addEventListener('click',()=>{
+  const isFS=!!(document.fullscreenElement||document.webkitFullscreenElement);
+  if(!isFS){
+    const el=document.documentElement;
+    if(el.requestFullscreen)el.requestFullscreen();
+    else if(el.webkitRequestFullscreen)el.webkitRequestFullscreen();
+  } else {
+    if(document.exitFullscreen)document.exitFullscreen();
+    else if(document.webkitExitFullscreen)document.webkitExitFullscreen();
+  }
+});
+document.addEventListener('fullscreenchange',()=>btnFS.textContent=document.fullscreenElement?'✕':'⛶');
+document.addEventListener('webkitfullscreenchange',()=>btnFS.textContent=document.webkitFullscreenElement?'✕':'⛶');
+</script>
+</body>
+</html>
