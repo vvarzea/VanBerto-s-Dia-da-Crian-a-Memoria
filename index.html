@@ -21,6 +21,8 @@ html,body{height:100%;font-family:'Nunito','Baloo 2',sans-serif;background:#1a0a
 @keyframes robotPop{0%,100%{transform:translateY(0) rotate(0)}30%{transform:translateY(-18px) rotate(-6deg)}70%{transform:translateY(-8px) rotate(5deg)}}
 @keyframes waveArm{0%,100%{transform:rotate(0)}25%,75%{transform:rotate(-20deg)}}
 @keyframes eyeBlink{0%,88%,100%{transform:scaleY(0)}93%{transform:scaleY(1)}}
+.vb-arm{transform-origin:65px 37px;animation:waveArm 1.5s ease-in-out infinite;}
+.vb-eyelid{transform-origin:40px 23px;animation:eyeBlink 5s ease-in-out infinite;}
 @keyframes confettiFall{0%{transform:translateY(-10vh) rotate(0);opacity:1}100%{transform:translateY(120vh) rotate(540deg);opacity:.9}}
 @keyframes flipIn{0%{transform:rotateY(90deg) scale(.8);opacity:0}100%{transform:rotateY(0) scale(1);opacity:1}}
 @keyframes matched{0%,100%{transform:scale(1)}30%{transform:scale(1.12)}60%{transform:scale(.96)}}
@@ -43,7 +45,7 @@ html,body{height:100%;font-family:'Nunito','Baloo 2',sans-serif;background:#1a0a
   position:relative;animation:cardPop .25s cubic-bezier(.34,1.56,.64,1) both;
 }
 .modal-card::before{content:'🛡️';position:absolute;top:8px;left:10px;font-size:18px;opacity:.65;pointer-events:none}
-.modal-card::after{content:'🤖';position:absolute;bottom:8px;right:10px;font-size:18px;opacity:.65;pointer-events:none}
+.modal-card::after{content:'🎮';position:absolute;bottom:8px;right:10px;font-size:18px;opacity:.65;pointer-events:none}
 
 .modal-robot-row{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:16px;}
 .modal-robot{height:clamp(72px,14vw,96px);width:auto;flex-shrink:0;filter:drop-shadow(0 0 14px rgba(56,189,248,.8));animation:vbFloat 3s ease-in-out infinite;}
@@ -347,7 +349,7 @@ html,body{height:100%;font-family:'Nunito','Baloo 2',sans-serif;background:#1a0a
 <!-- ═══ ROBOT FLUTUANTE ═══ -->
 <div id="fixed-robot-wrap">
   <div id="fixed-bubble" role="status" aria-live="polite"></div>
-  <svg id="fixed-vb-robot" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" role="button" tabindex="0" aria-label="VanBerto's">
+  <svg id="fixed-vb-robot" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" role="button" tabindex="0" aria-label="VanBerto's — clica para falar">
     <defs>
       <linearGradient id="frbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e5f2ff"/><stop offset="100%" stop-color="#bfdbfe"/></linearGradient>
       <linearGradient id="frvg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#38bdf8"/></linearGradient>
@@ -612,17 +614,17 @@ function onCardClick(idx){
       },400);
 
     } else {
-      // ❌ NÃO É PAR
+      // ❌ NÃO É PAR — espera 1200ms para o jogador ver as imagens, depois shake e vira
       setTimeout(()=>{
+        setMsg('Não é par. Tenta outra vez! 💪');
+        showBub('Quase! Continua a tentar! 💪');
         [a,b].forEach(i=>{
           const el=document.querySelector(`.mem-card[data-idx="${i}"]`);
           el.classList.add('shake');
-          setTimeout(()=>{el.classList.remove('shake');el.classList.remove('flipped');},380);
+          setTimeout(()=>{el.classList.remove('shake');el.classList.remove('flipped');},400);
         });
-        flipped=[];lockBoard=false;
-        setMsg('Não é par. Tenta outra vez! 💪');
-        showBub('Quase! Continua a tentar! 💪');
-      },800);
+        setTimeout(()=>{flipped=[];lockBoard=false;},420);
+      },1200);
     }
   }
 }
@@ -799,12 +801,18 @@ vbRobot.addEventListener('click',()=>{
   vbRobot.classList.remove('bounce');void vbRobot.offsetWidth;vbRobot.classList.add('bounce');
   showBub(MSGS[Math.floor(Math.random()*MSGS.length)]);
 });
+vbRobot.addEventListener('keydown',e=>{
+  if(e.key==='Enter'||e.key===' '){
+    vbRobot.classList.remove('bounce');void vbRobot.offsetWidth;vbRobot.classList.add('bounce');
+    showBub(MSGS[Math.floor(Math.random()*MSGS.length)]);
+  }
+});
 setInterval(()=>{
   if(document.getElementById('gameScreen').classList.contains('active')&&gameActive&&matched.size<LEVELS_CFG[lvl].pairs){
     showBub(MSGS[Math.floor(Math.random()*MSGS.length)]);
   }
 },18000);
-setTimeout(()=>showBub('Olá! Vira as cartas e encontra os pares! 🎈'),900);
+setTimeout(()=>showBub("Olá! Sou o VanBerto's! Vira as cartas e encontra os pares! 🎈"),900);
 
 /* ══════════════════════════════════════════
    FULLSCREEN
